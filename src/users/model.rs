@@ -2,14 +2,15 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use rocket::{FromForm, fs::TempFile};
 use serde::{Deserialize, Serialize};
-use surrealdb::{Datetime, sql::Thing};
+use surrealdb::types::SurrealValue;
+use surrealdb::types::{RecordId, ToSql};
 use validator::Validate;
 
 use crate::AppResult;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, SurrealValue)]
 pub struct User {
-    pub id: Thing,
+    pub id: RecordId,
     pub username: String,
     pub profile_picture: Option<String>,
     pub email: String,
@@ -18,9 +19,9 @@ pub struct User {
     pub following_count: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, SurrealValue)]
 pub struct DBUser {
-    pub id: Thing,
+    pub id: RecordId,
     pub username: String,
     pub profile_picture: Option<String>,
     pub email: String,
@@ -44,7 +45,7 @@ pub struct UserResponse {
 impl From<User> for UserResponse {
     fn from(user: User) -> Self {
         Self {
-            id: user.id.to_string(),
+            id: user.id.to_sql(),
             username: user.username,
             profile_picture: user.profile_picture,
             email: user.email,
@@ -97,12 +98,12 @@ pub struct RefreshRequest {
     pub refresh_token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, SurrealValue)]
 pub struct Follow {
-    pub id: Thing,
-    pub follower_id: Thing,
-    pub following_id: Thing,
-    pub created_at: Datetime,
+    pub id: RecordId,
+    pub follower_id: RecordId,
+    pub following_id: RecordId,
+    pub created_at: surrealdb::types::Datetime,
 }
 
 #[derive(FromForm)]

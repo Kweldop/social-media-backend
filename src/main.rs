@@ -1,9 +1,9 @@
+use jsonwebtoken::crypto::{CryptoProvider, rust_crypto};
+use rocket::data::{Limits, ToByteUnit};
 use std::{
     net::{IpAddr, Ipv4Addr},
     sync::Arc,
 };
-
-use rocket::data::{Limits, ToByteUnit};
 use surrealdb::{Surreal, engine::remote::ws::Client};
 
 use crate::{error::AppError, ws::WsManager};
@@ -23,6 +23,7 @@ type AppResult<T> = Result<T, AppError>;
 
 #[rocket::main]
 async fn main() -> AppResult<()> {
+    CryptoProvider::install_default(&rust_crypto::DEFAULT_PROVIDER).unwrap();
     dotenvy::dotenv().ok();
     std::fs::create_dir_all("data/profile-pictures").ok();
     std::fs::create_dir_all("data/posts").ok();

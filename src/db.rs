@@ -1,21 +1,23 @@
 use surrealdb::{
     Surreal,
-    engine::remote::ws::{Client, Ws},
+    engine::remote::ws::{Client, Wss},
     opt::auth::Root,
-    sql::Thing,
+    types::RecordId,
 };
 
 use crate::{AppResult, error::AppError};
 
 pub async fn init() -> AppResult<Surreal<Client>> {
-    let db = Surreal::new::<Ws>("127.0.0.1:8000").await?;
+    let db =
+        Surreal::new::<Wss>("kweldop-social-06ea93v719qnpe4b0mda7l3mjg.aws-aps1.surreal.cloud")
+            .await?;
     db.signin(Root {
-        password: "root",
-        username: "root",
+        password: "root".to_string(),
+        username: "root".to_string(),
     })
     .await?;
-    db.use_ns("social_media").await?;
-    db.use_db("social_media").await?;
+    db.use_ns("main").await?;
+    db.use_db("main").await?;
     Ok(db)
 }
 
@@ -27,10 +29,10 @@ pub fn parse_thing_to_record(id: &str) -> AppResult<(String, String)> {
     Ok((table.to_string(), record_id.to_string()))
 }
 
-pub fn parse_thing(id: &str) -> AppResult<Thing> {
+pub fn parse_thing(id: &str) -> AppResult<RecordId> {
     let (table, record_id) = id
         .split_once(':')
         .ok_or(AppError::XCustomMessage("Invalid ID"))?;
 
-    Ok(Thing::from((table, record_id)))
+    Ok(RecordId::new(table, record_id))
 }

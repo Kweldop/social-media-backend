@@ -1,13 +1,13 @@
 use rocket::{FromForm, fs::TempFile};
 use serde::{Deserialize, Serialize};
-use surrealdb::{Datetime, sql::Thing};
+use surrealdb_types::{Datetime, RecordId, SurrealValue, ToSql};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, SurrealValue)]
 pub struct Post {
-    id: Thing,
+    id: RecordId,
     content: String,
     caption: String,
-    uid: Thing,
+    uid: RecordId,
     likes_count: usize,
     created_at: Datetime,
 }
@@ -18,11 +18,11 @@ pub struct PostFormRequest<'r> {
     pub caption: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, SurrealValue)]
 pub struct PostRequest {
     pub content: String,
     pub caption: String,
-    pub uid: Thing,
+    pub uid: RecordId,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,10 +39,10 @@ pub struct PostResponse {
 impl From<Post> for PostResponse {
     fn from(post: Post) -> Self {
         Self {
-            id: post.id.to_string(),
+            id: post.id.to_sql(),
             content: post.content,
             caption: post.caption,
-            uid: post.uid.to_string(),
+            uid: post.uid.to_sql(),
             likes_count: post.likes_count,
             created_at: post.created_at,
             liked_by_user: false,
@@ -56,14 +56,14 @@ pub struct FeedQuery {
     pub limit: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, SurrealValue)]
 pub struct Like {
-    pub id: Thing,
-    pub post_id: Thing,
-    pub user_ids: Vec<Thing>,
+    pub id: RecordId,
+    pub post_id: RecordId,
+    pub user_ids: Vec<RecordId>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, SurrealValue)]
 pub struct LikeResponse {
     pub id: String,
     pub post_id: String,
@@ -73,9 +73,9 @@ pub struct LikeResponse {
 impl From<Like> for LikeResponse {
     fn from(like: Like) -> Self {
         Self {
-            id: like.id.to_string(),
-            post_id: like.post_id.to_string(),
-            user_ids: like.user_ids.into_iter().map(|e| e.to_string()).collect(),
+            id: like.id.to_sql(),
+            post_id: like.post_id.to_sql(),
+            user_ids: like.user_ids.into_iter().map(|e| e.to_sql()).collect(),
         }
     }
 }

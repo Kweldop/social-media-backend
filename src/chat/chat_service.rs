@@ -10,7 +10,8 @@ use rocket::{
 };
 use rocket_ws::result::Error as WsError;
 use rocket_ws::{Channel, WebSocket};
-use surrealdb::sql::Datetime;
+
+use surrealdb_types::{Datetime, ToSql};
 use tokio::sync::mpsc;
 use validator::ValidationError;
 
@@ -37,7 +38,7 @@ pub async fn create_conversation(
         .create("conversation")
         .content(ConversationRequest {
             created_at: Datetime::from(Utc::now()),
-            pair_key: [uid.to_string(), myid.to_string()].join("_"),
+            pair_key: [uid.to_sql(), myid.to_sql()].join("_"),
             participants: vec![uid, myid],
         })
         .await?;
@@ -253,7 +254,7 @@ async fn verify_member(
     let conv = conv.ok_or(AppError::Jwt(jsonwebtoken::errors::new_error(
         jsonwebtoken::errors::ErrorKind::InvalidToken,
     )))?;
-    Ok(conv.participants.iter().map(|e| e.to_string()).collect())
+    Ok(conv.participants.iter().map(|e| e.to_sql()).collect())
 }
 
 async fn send_message(

@@ -14,7 +14,9 @@ use argon2::{
 };
 use rocket::{State, delete, form::Form, get, post, put, serde::json::Json};
 use serde_json::{Value, json};
-use surrealdb::sql::Thing;
+
+use surrealdb::types::ToSql;
+use surrealdb_types::RecordId;
 use uuid::Uuid;
 use validator::{Validate, ValidationError};
 
@@ -47,8 +49,8 @@ async fn login(db: &State<DB>, req: LoginRequest) -> AppResult<Value> {
     let user = user.ok_or(AppError::XCustomMessage("User not found"))?;
     let parsed_hash = PasswordHash::new(&user.password_hash)?;
     Argon2::default().verify_password(req.password.as_bytes(), &parsed_hash)?;
-    let token = generate_access_token(user.id.to_string())?;
-    let refresh = generate_refresh_token(user.id.to_string())?;
+    let token = generate_access_token(user.id.to_sql())?;
+    let refresh = generate_refresh_token(user.id.to_sql())?;
     Ok(json!(
         {
         "access_token":token,
@@ -124,8 +126,8 @@ pub async fn get_follower_list(db: &State<DB>, auth: AuthUser) -> AppResult<Json
         )
         .bind(("id", parse_thing(&auth.user_id)?))
         .await?
-        .take::<Vec<Thing>>(0)?;
-    let list: Vec<String> = res.into_iter().map(|e| e.to_string()).collect();
+        .take::<Vec<RecordId>>(0)?;
+    let list: Vec<String> = res.into_iter().map(|e| e.to_sql()).collect();
     Ok(Json(list))
 }
 
@@ -150,7 +152,7 @@ pub async fn follow_user(uid: &str, db: &State<DB>, auth: AuthUser) -> AppResult
     let user: Follow = res
         .take::<Option<Follow>>(0)?
         .ok_or(AppError::XCustomMessage("Error occured"))?;
-    Ok(format!("Followed user : {}", user.follower_id))
+    Ok(format!("Followed user : {}", user.follower_id.to_sql()))
 }
 
 #[get("/get-following")]
@@ -165,8 +167,8 @@ pub async fn get_following_list(auth: AuthUser, db: &State<DB>) -> AppResult<Jso
         )
         .bind(("id", parse_thing(&auth.user_id)?))
         .await?
-        .take::<Vec<Thing>>(0)?;
-    let list: Vec<String> = res.into_iter().map(|e| e.to_string()).collect();
+        .take::<Vec<RecordId>>(0)?;
+    let list: Vec<String> = res.into_iter().map(|e| e.to_sql()).collect();
     Ok(Json(list))
 }
 
